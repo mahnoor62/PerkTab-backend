@@ -31,6 +31,11 @@ router.post("/login", async (req, res) => {
     const token = createAuthToken(admin);
     setAuthCookie(res, token);
 
+    // Log for debugging (remove sensitive data)
+    console.log(`Login successful for: ${email}`);
+    console.log(`Origin: ${req.headers.origin || "none"}`);
+    console.log(`Cookie will be set with secure: ${process.env.NODE_ENV === "production"}, sameSite: ${process.env.NODE_ENV === "production" ? "none" : "lax"}`);
+
     return res.json({
       message: "Logged in successfully.",
       token: token, // Also return token for API clients (Postman, etc.)

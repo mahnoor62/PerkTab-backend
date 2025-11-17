@@ -43,6 +43,7 @@ The server will start on port 5000 by default (or the port specified in `BACKEND
 - `POST /api/auth/login` - Login
 - `POST /api/auth/logout` - Logout
 - `GET /api/auth/session` - Get current session
+- `POST /api/auth/create` - Create new admin (requires authentication)
 
 ### Levels
 - `GET /api/levels` - Get all levels

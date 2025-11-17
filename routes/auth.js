@@ -3,8 +3,6 @@ const router = express.Router();
 const {
   authenticateAdminCredentials,
   createAuthToken,
-  setAuthCookie,
-  clearAuthCookie,
   getCurrentAdmin,
   createAdmin,
 } = require("../lib/auth");
@@ -29,16 +27,14 @@ router.post("/login", async (req, res) => {
     }
 
     const token = createAuthToken(admin);
-    setAuthCookie(res, token);
 
     // Log for debugging (remove sensitive data)
     console.log(`Login successful for: ${email}`);
     console.log(`Origin: ${req.headers.origin || "none"}`);
-    console.log(`Cookie will be set with secure: ${process.env.NODE_ENV === "production"}, sameSite: ${process.env.NODE_ENV === "production" ? "none" : "lax"}`);
 
     return res.json({
       message: "Logged in successfully.",
-      token: token, // Also return token for API clients (Postman, etc.)
+      token: token, // JWT token - client should store this and send in Authorization header
       admin: {
         email: admin.email,
         name: admin.name,
@@ -54,7 +50,7 @@ router.post("/login", async (req, res) => {
 
 // Logout
 router.post("/logout", async (req, res) => {
-  clearAuthCookie(res);
+  // No cookies to clear - client should remove token from storage
   return res.json({ message: "Logged out successfully." });
 });
 

@@ -13,10 +13,16 @@ const fs = require("fs").promises;
 
 // Middleware to check authentication
 async function requireAuth(req, res, next) {
+  // Log request details for debugging
+  console.log(`[Auth] Checking auth for ${req.method} ${req.path}`);
+  console.log(`[Auth] Authorization header:`, req.headers.authorization ? "present" : "missing");
+  
   const admin = await getCurrentAdmin(req);
   if (!admin) {
+    console.log(`[Auth] Unauthorized access attempt to ${req.method} ${req.path}`);
     return res.status(401).json({ message: "Unauthorized" });
   }
+  console.log(`[Auth] Authenticated as:`, admin.email);
   req.admin = admin;
   next();
 }

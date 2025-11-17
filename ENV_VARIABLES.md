@@ -4,13 +4,17 @@ This document lists all environment variables used by the backend server.
 
 ## Required Variables
 
-None of these are strictly required (all have defaults), but should be configured for production.
+These variables must be defined (for example in `backend/.env`) before starting the server:
+
+- `BACKEND_PORT`
+- `MONGO_URL`
+- `JWT_SECRET`
 
 ## Configuration Variables
 
 ### `BACKEND_PORT`
 - **Type**: Number
-- **Default**: `3000`
+- **Default**: _None_ (required)
 - **Description**: Port number for the backend server to listen on
 - **Example**: `3000` or `5000`
 
@@ -24,7 +28,7 @@ None of these are strictly required (all have defaults), but should be configure
 
 ### `MONGO_URL`
 - **Type**: String (MongoDB connection string)
-- **Default**: `mongodb://127.0.0.1:27017/DotBack`
+- **Default**: _None_ (required)
 - **Description**: MongoDB connection string
 - **Example**: `mongodb://127.0.0.1:27017/DotBack`
 
@@ -32,9 +36,9 @@ None of these are strictly required (all have defaults), but should be configure
 
 ### `JWT_SECRET`
 - **Type**: String
-- **Default**: `dotback_secret_key` (⚠️ **CHANGE IN PRODUCTION!**)
+- **Default**: _None_ (required)
 - **Description**: Secret key for signing JWT tokens
-- **Important**: Must be changed to a secure random string in production
+- **Important**: Must be a secure random string in every environment
 - **Example**: Generate with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 
 ## Environment Variables
@@ -74,16 +78,17 @@ None of these are strictly required (all have defaults), but should be configure
 All environment variables are accessed via `process.env.VARIABLE_NAME`:
 
 ```javascript
-const PORT = process.env.BACKEND_PORT || 3000;
+const PORT = process.env.BACKEND_PORT;
 const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-const mongoUrl = process.env.MONGO_URL || "mongodb://127.0.0.1:27017/DotBack";
-const jwtSecret = process.env.JWT_SECRET || "dotback_secret_key";
+const mongoUrl = process.env.MONGO_URL;
+const jwtSecret = process.env.JWT_SECRET;
 ```
 
 ## Validation
 
-The server validates environment variables on startup:
-- Warns if using default JWT_SECRET (security risk in production)
+The server validates required environment variables on startup:
+- Throws an error if `BACKEND_PORT`, `MONGO_URL`, or `JWT_SECRET` are missing
+- Warns if neither `FRONTEND_URL` nor `ALLOWED_ORIGINS` are configured
 - Shows configuration on startup
 
 ## Security Notes

@@ -1,13 +1,35 @@
 // Quick script to verify backend is running and accessible
 const http = require("http");
+const path = require("path");
+const fs = require("fs");
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:5000";
+const envPath = path.join(__dirname, ".env");
+if (fs.existsSync(envPath)) {
+  require("dotenv").config({ path: envPath });
+}
 
-console.log(`Checking if backend is accessible at ${BACKEND_URL}...`);
+const derivedBackendUrl =
+  process.env.BACKEND_URL ||
+  (process.env.BACKEND_HOST && process.env.BACKEND_PORT
+    ? `http://${process.env.BACKEND_HOST}:${process.env.BACKEND_PORT}`
+    : null);
+
+if (!derivedBackendUrl) {
+  throw new Error(
+    "Define BACKEND_URL or both BACKEND_HOST and BACKEND_PORT in backend/.env before running this script."
+  );
+}
+
+console.log(`Checking if backend is accessible at ${derivedBackendUrl}...`);
+
+const parsedUrl = new URL(derivedBackendUrl);
+const requestPort = parsedUrl.port
+  ? parseInt(parsedUrl.port, 10)
+  : parsedUrl.protocol === "https:" ? 443 : 80;
 
 const options = {
-  hostname: new URL(BACKEND_URL).hostname,
-  port: new URL(BACKEND_URL).port || 5000,
+  hostname: parsedUrl.hostname,
+  port: requestPort,
   path: "/health",
   method: "GET",
   timeout: 5000,

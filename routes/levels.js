@@ -29,8 +29,39 @@ async function requireAuth(req, res, next) {
 
 // Get all levels
 router.get("/", requireAuth, async (req, res) => {
-  const levels = await getAllLevelConfigs();
-  return res.json({ levels });
+  try {
+    console.log(`[Levels API] GET /api/levels - Request from: ${req.admin.email}`);
+    const levels = await getAllLevelConfigs();
+    
+    console.log(`[Levels API] Found ${levels.length} levels in database`);
+    
+    if (!Array.isArray(levels)) {
+      console.error(`[Levels API] ERROR: getAllLevelConfigs did not return an array:`, typeof levels, levels);
+      return res.status(500).json({ 
+        message: "Internal server error: Invalid response from database",
+        error: "Database query returned non-array result"
+      });
+    }
+    
+    // Log if empty but don't throw error - empty array is valid if no levels exist
+    if (levels.length === 0) {
+      console.warn(`[Levels API] WARNING: Database returned empty array. This might indicate:`);
+      console.warn(`  - No levels created yet in database`);
+      console.warn(`  - Database connection issue`);
+      console.warn(`  - Wrong database being queried`);
+    } else {
+      console.log(`[Levels API] Successfully returning ${levels.length} levels`);
+    }
+    
+    return res.json({ levels });
+  } catch (error) {
+    console.error(`[Levels API] ERROR in GET /api/levels:`, error);
+    console.error(`[Levels API] Error stack:`, error.stack);
+    return res.status(500).json({ 
+      message: "Failed to fetch levels from database",
+      error: error.message || "Unknown error"
+    });
+  }
 });
 
 // Create a new level

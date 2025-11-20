@@ -6,7 +6,8 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "seed:levels": "node scripts/seedLevels.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

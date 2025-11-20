@@ -47,6 +47,11 @@ Production mode:
 npm start
 ```
 
+Seed default levels (run once per database):
+```bash
+npm run seed:levels
+```
+
 The server will start on the port specified in `BACKEND_PORT` environment variable (required).
 
 ## API Endpoints

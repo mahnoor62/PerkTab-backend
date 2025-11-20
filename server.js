@@ -44,13 +44,18 @@ const corsOptions = {
     
     // Add FRONTEND_URL if set
     if (process.env.FRONTEND_URL) {
-      allowedOrigins.push(process.env.FRONTEND_URL);
+      const frontendUrl = process.env.FRONTEND_URL.trim();
+      allowedOrigins.push(frontendUrl);
+      console.log(`[CORS] Added FRONTEND_URL: ${frontendUrl}`);
     }
     
     // Add ALLOWED_ORIGINS (comma-separated list) if set
     if (process.env.ALLOWED_ORIGINS) {
-      const origins = process.env.ALLOWED_ORIGINS.split(",").map(o => o.trim()).filter(Boolean);
+      const origins = process.env.ALLOWED_ORIGINS.split(",")
+        .map(o => o.trim())
+        .filter(Boolean);
       allowedOrigins.push(...origins);
+      console.log(`[CORS] Added ALLOWED_ORIGINS:`, origins);
     }
     
     // In development mode, add localhost URLs from env variable
@@ -59,21 +64,38 @@ const corsOptions = {
       allowedOrigins.push(`http://127.0.0.1:${process.env.LOCALHOST_PORT}`);
     }
     
+    // Always add localhost for local development (if not already added)
+    if (process.env.NODE_ENV === "development") {
+      const localhost3000 = "http://localhost:3000";
+      const localhost3002 = "http://localhost:3002";
+      if (!allowedOrigins.includes(localhost3000)) {
+        allowedOrigins.push(localhost3000);
+      }
+      if (!allowedOrigins.includes(localhost3002)) {
+        allowedOrigins.push(localhost3002);
+      }
+    }
+    
     // Add CORS_PATTERN regex if set (e.g., /^https:\/\/.*\.vercel\.app$/)
     let corsPattern = null;
     if (process.env.CORS_PATTERN) {
       try {
         corsPattern = new RegExp(process.env.CORS_PATTERN);
+        console.log(`[CORS] Using CORS_PATTERN: ${process.env.CORS_PATTERN}`);
       } catch (error) {
-        console.warn(`Invalid CORS_PATTERN regex: ${process.env.CORS_PATTERN}`);
+        console.warn(`[CORS] Invalid CORS_PATTERN regex: ${process.env.CORS_PATTERN}`);
       }
     }
     
     // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+    if (!origin) {
+      console.log(`[CORS] Request with no origin - allowing`);
+      return callback(null, true);
+    }
     
     // In development, allow all origins if no specific origins configured
     if (process.env.NODE_ENV === "development" && allowedOrigins.length === 0 && !corsPattern) {
+      console.log(`[CORS] Development mode - no origins configured, allowing all`);
       return callback(null, true);
     }
     
@@ -90,22 +112,24 @@ const corsOptions = {
     
     // Check against regex pattern if set
     if (corsPattern && corsPattern.test(origin)) {
+      console.log(`[CORS] Origin ${origin} matched CORS_PATTERN`);
       return callback(null, true);
     }
     
     if (isAllowed) {
+      console.log(`[CORS] ✅ Allowed origin: ${origin}`);
       callback(null, true);
     } else {
-      console.warn(`CORS: Blocked origin ${origin}`);
-      console.warn(`CORS: Allowed origins:`, allowedOrigins);
+      console.warn(`[CORS] ❌ Blocked origin: ${origin}`);
+      console.warn(`[CORS] Allowed origins:`, allowedOrigins);
       if (corsPattern) {
-        console.warn(`CORS: Pattern: ${corsPattern}`);
+        console.warn(`[CORS] Pattern: ${corsPattern}`);
       }
       callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization", "Cookie", "authorization", "content-type"],
   exposedHeaders: ["Set-Cookie"],
   preflightContinue: false,
@@ -138,6 +162,15 @@ app.use("/api/upload", uploadRoutes);
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
+});
+
+// API health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({ 
+    status: "ok", 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || "development"
+  });
 });
 
 // Validate required environment variables
@@ -212,13 +245,23 @@ async function startServer() {
     await connectToDatabase();
     await ensureSeedData();
     
-    app.listen(PORT, () => {
+    // Determine host to listen on
+    // In production, listen on 0.0.0.0 to accept connections from outside
+    // In development, use localhost or specified BACKEND_HOST
+    const host = process.env.NODE_ENV === "production" 
+      ? (process.env.BACKEND_HOST || "0.0.0.0")
+      : (process.env.BACKEND_HOST || "localhost");
+    
+    app.listen(PORT, host, () => {
       const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-      const host = process.env.BACKEND_HOST || "localhost";
-      console.log(`✅ Backend server running on port ${PORT}`);
-      console.log(`   Health check: ${protocol}://${host}:${PORT}/health`);
+      const displayHost = host === "0.0.0.0" ? "all interfaces" : host;
+      console.log(`✅ Backend server running on ${displayHost}:${PORT}`);
+      console.log(`   Health check: ${protocol}://${host === "0.0.0.0" ? "localhost" : host}:${PORT}/health`);
+      console.log(`   API health: ${protocol}://${host === "0.0.0.0" ? "localhost" : host}:${PORT}/api/health`);
       console.log(`   Frontend URL: ${process.env.FRONTEND_URL || "Not configured"}`);
+      console.log(`   Allowed Origins: ${process.env.ALLOWED_ORIGINS || "Not configured"}`);
       console.log(`   Environment: ${process.env.NODE_ENV || "development"}`);
+      console.log(`   CORS: Configured for ${process.env.FRONTEND_URL || process.env.ALLOWED_ORIGINS || "development (all origins)"}`);
     });
   } catch (error) {
     console.error("Failed to start server:", error);

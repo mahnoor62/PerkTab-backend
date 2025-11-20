@@ -106,7 +106,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "Cookie", "authorization", "content-type"],
+  allowedHeaders: ["Content-Type", "Cookie", "content-type", "token"],
   exposedHeaders: ["Set-Cookie"],
   preflightContinue: false,
   optionsSuccessStatus: 204,
@@ -138,6 +138,15 @@ app.use("/api/upload", uploadRoutes);
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
+});
+
+// Debug endpoint to check headers (remove in production)
+app.get("/api/test-headers", (req, res) => {
+  res.json({
+    message: "Headers received by server",
+    allHeaderKeys: Object.keys(req.headers),
+    tokenHeader: req.headers.token || "not found",
+  });
 });
 
 // Validate required environment variables

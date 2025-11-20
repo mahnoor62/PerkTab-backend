@@ -34,7 +34,7 @@ router.post("/login", async (req, res) => {
 
     return res.json({
       message: "Logged in successfully.",
-      token: token, // JWT token - client should store this and send in Authorization header
+      token: token,
       admin: {
         email: admin.email,
         name: admin.name,

@@ -12,6 +12,14 @@ const {
 const path = require("path");
 const fs = require("fs").promises;
 
+function sanitizeRedeemCodes(codes) {
+  if (!Array.isArray(codes)) return null;
+  const normalized = codes
+    .map(code => (typeof code === "string" ? code.trim() : ""))
+    .filter(Boolean);
+  return Array.from(new Set(normalized));
+}
+
 async function requireAuth(req, res, next) {
   const admin = await getCurrentAdmin(req);
   if (!admin) {
@@ -87,12 +95,26 @@ router.post("/", requireAuth, async (req, res) => {
       });
     }
 
+    if (payload.redeemCodes !== undefined && !Array.isArray(payload.redeemCodes)) {
+      return res.status(400).json({
+        message: "Redeem codes must be provided as an array.",
+      });
+    }
+
+    const redeemCodes = sanitizeRedeemCodes(payload.redeemCodes);
+
     const itemData = {
       name: payload.name.trim(),
       description: payload.description?.trim() || "",
       imageUrl: payload.imageUrl || "",
       coins: payload.coins,
       isActive: payload.isActive !== undefined ? payload.isActive : true,
+      redeemCodes: redeemCodes !== null ? redeemCodes : [],
+      redeemCodeCount: redeemCodes !== null ? redeemCodes.length : 0,
+      status:
+        payload.status && ["unused", "used"].includes(payload.status)
+          ? payload.status
+          : "unused",
     };
     
     console.log("Creating shop item with data:", itemData);
@@ -141,6 +163,26 @@ router.put("/:id", requireAuth, async (req, res) => {
     if (payload.imageUrl !== undefined) updateData.imageUrl = payload.imageUrl;
     if (payload.coins !== undefined) updateData.coins = payload.coins;
     if (payload.isActive !== undefined) updateData.isActive = payload.isActive;
+    if (payload.status !== undefined) {
+      if (!["unused", "used"].includes(payload.status)) {
+        return res.status(400).json({
+          message: "Status must be either 'unused' or 'used'.",
+        });
+      }
+      updateData.status = payload.status;
+    }
+    if (payload.redeemCodes !== undefined) {
+      if (!Array.isArray(payload.redeemCodes)) {
+        return res.status(400).json({
+          message: "Redeem codes must be provided as an array.",
+        });
+      }
+      const redeemCodes = sanitizeRedeemCodes(payload.redeemCodes);
+      if (redeemCodes !== null) {
+        updateData.redeemCodes = redeemCodes;
+        updateData.redeemCodeCount = redeemCodes.length;
+      }
+    }
 
     const oldImageUrl = item.imageUrl;
     const newImageUrl = updateData.imageUrl || item.imageUrl;

@@ -26,6 +26,20 @@ const ShopItemSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    redeemCodes: {
+      type: [String],
+      default: [],
+    },
+    redeemCodeCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    status: {
+      type: String,
+      enum: ["unused", "used"],
+      default: "unused",
+    },
   },
   { timestamps: true }
 );

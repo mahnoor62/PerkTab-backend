@@ -33,6 +33,7 @@ const levelsRoutes = require("./routes/levels");
 const uploadRoutes = require("./routes/upload");
 const shopRoutes = require("./routes/shop");
 const productRoutes = require("./routes/products");
+const publicLevelsRoutes = require("./routes/levelsPublic");
 
 const app = express();
 const PORT = process.env.BACKEND_PORT;
@@ -82,6 +83,7 @@ app.use("/uploads", express.static(uploadsDir));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/levels", levelsRoutes);
+app.use("/api/get/levels", publicLevelsRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/shop", shopRoutes);
 app.use("/api/products", productRoutes);

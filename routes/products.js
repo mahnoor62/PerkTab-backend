@@ -4,9 +4,7 @@ const ShopItem = require("../models/ShopItem");
 
 router.get("/", async (req, res) => {
   try {
-    const includeInactive = req.query.includeInactive === "true";
-    const query = includeInactive ? {} : { isActive: true };
-    const items = await ShopItem.find(query).sort({ createdAt: -1 }).lean();
+    const items = await ShopItem.find().sort({ createdAt: -1 }).lean();
 
     return res.json({
       items,

@@ -29,9 +29,7 @@ router.get("/", async (req, res) => {
 
 router.get("/get-redeem-codes/:id", async (req, res) => {
   try {
-    const item = await ShopItem.findById(req.params.id)
-      .select("name redeemCodes redeemCodeCount isActive")
-      .lean();
+    const item = await ShopItem.findById(req.params.id).select("name redeemCodes redeemCodeCount isActive status");
 
     if (!item || !item.isActive) {
       return res.status(404).json({ message: "Item not found." });
@@ -41,11 +39,22 @@ router.get("/get-redeem-codes/:id", async (req, res) => {
       return res.status(404).json({ message: "No redeem codes available." });
     }
 
+    const [selectedCode, ...remainingCodes] = item.redeemCodes;
+    item.redeemCodes = remainingCodes;
+    item.redeemCodeCount = Math.max(remainingCodes.length, 0);
+
+    if (item.redeemCodeCount === 0) {
+      item.status = "used";
+    }
+
+    await item.save();
+
     return res.json({
       itemId: item._id,
       name: item.name,
-      redeemCodes: item.redeemCodes,
-      count: item.redeemCodes.length,
+      redeemCode: selectedCode,
+      remainingCodes: item.redeemCodeCount,
+      status: item.status,
     });
   } catch (error) {
     console.error("[Products API] Failed to fetch redeem codes:", error);

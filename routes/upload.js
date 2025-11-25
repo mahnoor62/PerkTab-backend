@@ -33,15 +33,15 @@ router.post("/", requireAuth, upload.single("file"), async (req, res) => {
 
   const buffer = req.file.buffer;
 
-  // Validate image dimensions
+  // Validate image dimensions (max 1080x1080)
   try {
     const metadata = await sharp(buffer).metadata();
     const maxWidth = 1080;
-    const maxHeight = 400;
+    const maxHeight = 1080;
 
     if (metadata.width > maxWidth || metadata.height > maxHeight) {
       return res.status(400).json({
-        message: `Image dimensions must not exceed ${maxWidth}x${maxHeight} pixels. Current size: ${metadata.width}x${metadata.height}`,
+        message: `Image dimensions must not exceed ${maxWidth}x${maxHeight} pixels. Current size: ${metadata.width}x${metadata.height}px`,
       });
     }
   } catch (error) {

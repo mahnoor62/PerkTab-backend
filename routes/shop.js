@@ -115,6 +115,7 @@ router.post("/", requireAuth, async (req, res) => {
         payload.status && ["unused", "used"].includes(payload.status)
           ? payload.status
           : "unused",
+      validity: payload.validity ? new Date(payload.validity) : null,
     };
     
     console.log("Creating shop item with data:", itemData);
@@ -170,6 +171,9 @@ router.put("/:id", requireAuth, async (req, res) => {
         });
       }
       updateData.status = payload.status;
+    }
+    if (payload.validity !== undefined) {
+      updateData.validity = payload.validity ? new Date(payload.validity) : null;
     }
     if (payload.redeemCodes !== undefined) {
       if (!Array.isArray(payload.redeemCodes)) {

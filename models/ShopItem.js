@@ -40,6 +40,10 @@ const ShopItemSchema = new Schema(
       enum: ["unused", "used"],
       default: "unused",
     },
+    validity: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

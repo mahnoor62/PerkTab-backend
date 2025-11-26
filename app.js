@@ -91,7 +91,7 @@ require("dotenv").config();
 const app = express();
 
 
-require("./lib/db").connect();
+require("./lib/db").connectToDatabase();
 
 
 const corsOrigins = process.env.CORS_OPTIONS

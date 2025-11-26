@@ -36,7 +36,7 @@ const productRoutes = require("./routes/products");
 const publicLevelsRoutes = require("./routes/levelsPublic");
 
 const app = express();
-const PORT = process.env.BACKEND_PORT;
+const PORT = process.env.PORT;
 
 // Middleware
 app.use((req, res, next) => {
@@ -138,8 +138,8 @@ function validateEnv() {
   const warnings = [];
   
   // Required variables
-  if (!process.env.BACKEND_PORT) {
-    errors.push("❌ BACKEND_PORT is required");
+  if (!process.env.PORT) {
+    errors.push("❌ PORT is required");
   }
   
   if (!process.env.MONGO_URL) {
@@ -171,7 +171,7 @@ function validateEnv() {
   }
 
   return {
-    BACKEND_PORT: process.env.BACKEND_PORT,
+    PORT: process.env.PORT,
     MONGO_URL: process.env.MONGO_URL,
     JWT_SECRET: process.env.JWT_SECRET,
     FRONTEND_URL: process.env.FRONTEND_URL,
@@ -187,7 +187,7 @@ async function startServer() {
 
     // Debug: Show loaded environment variables
     console.log("\n📋 Environment Variables (from .env or system):");
-    console.log(`   BACKEND_PORT: ${process.env.BACKEND_PORT || "❌ NOT SET"}`);
+    console.log(`   PORT: ${process.env.PORT || "❌ NOT SET"}`);
     console.log(`   FRONTEND_URL: ${process.env.FRONTEND_URL || "❌ Not set"}`);
     console.log(`   ALLOWED_ORIGINS: ${process.env.ALLOWED_ORIGINS || "❌ Not set"}`);
     console.log(`   CORS_PATTERN: ${process.env.CORS_PATTERN || "❌ Not set"}`);

@@ -1,7 +1,7 @@
 // Load environment variables from .env file
 const path = require("path");
 const fs = require("fs");
-
+require("dotenv").config();
 // Get the path to .env file in the backend directory
 const envPath = path.join(__dirname, ".env");
 

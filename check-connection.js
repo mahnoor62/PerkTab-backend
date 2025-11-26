@@ -9,10 +9,7 @@ if (fs.existsSync(envPath)) {
 }
 
 const derivedBackendUrl =
-  process.env.BACKEND_URL ||
-  (process.env.BACKEND_HOST && process.env.BACKEND_PORT
-    ? `http://${process.env.BACKEND_HOST}:${process.env.BACKEND_PORT}`
-    : null);
+  process.env.BACKEND_URL;
 
 if (!derivedBackendUrl) {
   throw new Error(

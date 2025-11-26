@@ -11,7 +11,7 @@ router.get("/", async (req, res) => {
       ],
     })
       .sort({ createdAt: -1 })
-      .select("name description imageUrl coins isActive redeemCodeCount status validity createdAt updatedAt")
+      .select("-redeemCodes -__v")
       .lean();
 
     return res.json({

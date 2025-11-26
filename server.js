@@ -46,21 +46,51 @@ app.use((req, res, next) => {
   next();
 });
 
-const allowed = [
+
+const rawAllowed = [
   process.env.FRONTEND_URL,
-  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(",").map(o => o.trim()) : [])
+  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(",") : []),
 ].filter(Boolean);
+
+const normalize = (url) =>
+  url ? url.trim().replace(/\/$/, "") : url;
+
+const allowed = rawAllowed.map(normalize);
 
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowed.includes(origin)) return callback(null, true);
-    console.log("❌ BLOCKED ORIGIN:", origin);
+    if (!origin) return callback(null, true); // Postman etc.
+
+    const normalizedOrigin = normalize(origin);
+
+    if (allowed.includes(normalizedOrigin)) {
+      return callback(null, true);
+    }
+
+    console.log("❌ BLOCKED ORIGIN:", normalizedOrigin);
     console.log("ALLOWED:", allowed);
-    callback(new Error("Not allowed by CORS"));
+
+    return callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
 };
+
+
+// const allowed = [
+//   process.env.FRONTEND_URL,
+//   ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(",").map(o => o.trim()) : [])
+// ].filter(Boolean);
+
+// const corsOptions = {
+//   origin: function (origin, callback) {
+//     if (!origin) return callback(null, true);
+//     if (allowed.includes(origin)) return callback(null, true);
+//     console.log("❌ BLOCKED ORIGIN:", origin);
+//     console.log("ALLOWED:", allowed);
+//     callback(new Error("Not allowed by CORS"));
+//   },
+//   credentials: true,
+// };
 
 app.use(cors(corsOptions));
 
@@ -83,7 +113,7 @@ app.use("/uploads", express.static(uploadsDir));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/levels", levelsRoutes);
-app.use("/api/get/levels", publicLevelsRoutes);
+app.use("/api/game/levels", publicLevelsRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/shop", shopRoutes);
 app.use("/api/products", productRoutes);

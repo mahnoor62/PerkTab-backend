@@ -113,7 +113,7 @@ app.use("/uploads", express.static(uploadsDir));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/levels", levelsRoutes);
-app.use("/api/game/levels", publicLevelsRoutes);
+app.use("/api/get/levels", publicLevelsRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/shop", shopRoutes);
 app.use("/api/products", productRoutes);

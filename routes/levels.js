@@ -111,23 +111,30 @@ router.put("/:level", requireAuth, async (req, res) => {
   }
 
   const payload = req.body;
-  const requiredFields = [
-    "backgroundColor",
-    "dot1Color",
-    "dot2Color",
-    "dot3Color",
-    "dot4Color",
-    "dot5Color",
-  ];
-
-  const missingField = requiredFields.find(
-    (field) => typeof payload[field] !== "string"
-  );
-
-  if (missingField) {
+  
+  if (typeof payload.backgroundColor !== "string") {
     return res.status(400).json({
-      message: `Field ${missingField} is required.`,
+      message: "Field backgroundColor is required.",
     });
+  }
+
+  if (!Array.isArray(payload.dots)) {
+    return res.status(400).json({
+      message: "Field dots must be an array.",
+    });
+  }
+
+  for (let i = 0; i < payload.dots.length; i++) {
+    const dot = payload.dots[i];
+    if (
+      typeof dot.color !== "string" ||
+      typeof dot.size !== "string" ||
+      typeof dot.score !== "string"
+    ) {
+      return res.status(400).json({
+        message: `Dot at index ${i} must have color, size, and score as strings.`,
+      });
+    }
   }
 
   // Get current level to check for old logo

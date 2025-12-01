@@ -11,11 +11,16 @@ const LevelConfigSchema = new Schema(
       max: 10,
     },
     backgroundColor: { type: String, default: "" },
-    dot1Color: { type: String, default: "" },
-    dot2Color: { type: String, default: "" },
-    dot3Color: { type: String, default: "" },
-    dot4Color: { type: String, default: "" },
-    dot5Color: { type: String, default: "" },
+    dots: {
+      type: [
+        {
+          color: { type: String, default: "" },
+          size: { type: String, default: "" },
+          score: { type: Number, default: "" },
+        },
+      ],
+      default: [],
+    },
     logoUrl: { type: String, default: "" },
   },
   { timestamps: true }

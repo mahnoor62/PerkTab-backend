@@ -16,7 +16,7 @@ const LevelConfigSchema = new Schema(
         {
           color: { type: String, default: "" },
           size: { type: String, default: "" },
-          score: { type: Number, default: "" },
+          score: { type: String, default: "" },
         },
       ],
       default: [],

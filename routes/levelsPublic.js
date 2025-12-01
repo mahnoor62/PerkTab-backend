@@ -1,15 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const LevelConfig = require("../models/LevelConfig");
+const { getAllLevelConfigs } = require("../lib/levels");
 
 router.get("/", async (req, res) => {
   try {
-    const levels = await LevelConfig.find()
-      .sort({ level: 1 })
-      .select(
-        "level backgroundColor dot1Color dot2Color dot3Color dot4Color dot5Color logoUrl createdAt updatedAt"
-      )
-      .lean();
+    const levels = await getAllLevelConfigs();
 
     return res.json({
       levels,

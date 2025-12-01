@@ -31,21 +31,6 @@ router.post("/", requireAuth, upload.single("file"), async (req, res) => {
     });
   }
 
-  // Validate file type - only PNG and JPG allowed
-  const fileType = req.file.mimetype.toLowerCase();
-  const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
-  const fileName = req.file.originalname.toLowerCase();
-  const validExtensions = ['.png', '.jpg', '.jpeg'];
-  
-  const isValidType = validTypes.includes(fileType) || 
-                     validExtensions.some(ext => fileName.endsWith(ext));
-  
-  if (!isValidType) {
-    return res.status(400).json({
-      message: "Only PNG and JPG images are allowed.",
-    });
-  }
-
   const buffer = req.file.buffer;
 
   // Validate image dimensions (max 1080x1080)
@@ -60,9 +45,8 @@ router.post("/", requireAuth, upload.single("file"), async (req, res) => {
       });
     }
   } catch (error) {
-    // If sharp can't process it, it might not be a valid image
     return res.status(400).json({
-      message: "Invalid image file. Please upload a valid PNG or JPG image.",
+      message: "Invalid image file.",
     });
   }
 

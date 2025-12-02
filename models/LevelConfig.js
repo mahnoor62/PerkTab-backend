@@ -10,20 +10,34 @@ const LevelConfigSchema = new Schema(
       min: 1,
       max: 10,
     },
-    backgroundColor: { type: String, default: "" },
+    background: { type: String, default: null },
     dots: {
       type: [
         {
-          color: { type: String, default: "" },
-          size: { type: String, default: "" },
-          score: { type: String, default: "" },
+          color: { type: String, default: null },
+          size: { type: String, default: null },
+          sizeScore: { 
+            type: Number, 
+            default: 0,
+            set: (v) => typeof v === 'string' ? parseInt(v, 10) || 0 : (typeof v === 'number' ? v : 0)
+          },
+          colorScore: { 
+            type: Number, 
+            default: 0,
+            set: (v) => typeof v === 'string' ? parseInt(v, 10) || 0 : (typeof v === 'number' ? v : 0)
+          },
+          totalScore: { 
+            type: Number, 
+            default: 0,
+            set: (v) => typeof v === 'string' ? parseInt(v, 10) || 0 : (typeof v === 'number' ? v : 0)
+          },
         },
       ],
       default: [],
     },
-    logoUrl: { type: String, default: "" },
+    logoUrl: { type: String, default: null },
   },
-  { timestamps: true }
+  { timestamps: true, strict: true }
 );
 
 module.exports =

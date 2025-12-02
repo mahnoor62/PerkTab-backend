@@ -112,9 +112,10 @@ router.put("/:level", requireAuth, async (req, res) => {
 
   const payload = req.body;
   
-  if (typeof payload.backgroundColor !== "string") {
+  // Background field is optional, but if provided should be a string
+  if (payload.background !== undefined && typeof payload.background !== "string") {
     return res.status(400).json({
-      message: "Field backgroundColor is required.",
+      message: "Field background must be a string.",
     });
   }
 
@@ -126,15 +127,12 @@ router.put("/:level", requireAuth, async (req, res) => {
 
   for (let i = 0; i < payload.dots.length; i++) {
     const dot = payload.dots[i];
-    if (
-      typeof dot.color !== "string" ||
-      typeof dot.size !== "string" ||
-      typeof dot.score !== "string"
-    ) {
+    if (typeof dot.color !== "string" || typeof dot.size !== "string") {
       return res.status(400).json({
-        message: `Dot at index ${i} must have color, size, and score as strings.`,
+        message: `Dot at index ${i} must have color and size as strings.`,
       });
     }
+    // sizeScore and colorScore are optional, will default to "0" if not provided
   }
 
   // Get current level to check for old logo

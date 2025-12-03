@@ -11,22 +11,37 @@ const LevelConfigSchema = new Schema(
       max: 10,
     },
     background: { type: String, default: null },
+    colors: {
+      type: [
+        {
+          color: { type: String, required: true },
+          score: { 
+            type: Number, 
+            default: 0,
+            set: (v) => typeof v === 'string' ? parseInt(v, 10) || 0 : (typeof v === 'number' ? v : 0)
+          },
+        },
+      ],
+      default: [],
+    },
+    dotSizes: {
+      type: [
+        {
+          size: { type: String, required: true },
+          score: { 
+            type: Number, 
+            default: 0,
+            set: (v) => typeof v === 'string' ? parseInt(v, 10) || 0 : (typeof v === 'number' ? v : 0)
+          },
+        },
+      ],
+      default: [],
+    },
     dots: {
       type: [
         {
           color: { type: String, default: null },
-          size: { type: String, default: null },
-          sizeScore: { 
-            type: Number, 
-            default: 0,
-            set: (v) => typeof v === 'string' ? parseInt(v, 10) || 0 : (typeof v === 'number' ? v : 0)
-          },
           colorScore: { 
-            type: Number, 
-            default: 0,
-            set: (v) => typeof v === 'string' ? parseInt(v, 10) || 0 : (typeof v === 'number' ? v : 0)
-          },
-          totalScore: { 
             type: Number, 
             default: 0,
             set: (v) => typeof v === 'string' ? parseInt(v, 10) || 0 : (typeof v === 'number' ? v : 0)
@@ -36,6 +51,16 @@ const LevelConfigSchema = new Schema(
       default: [],
     },
     logoUrl: { type: String, default: null },
+    useDefaultColors: {
+      type: String,
+      enum: ['default', 'custom'],
+      default: 'default',
+    },
+    useDefaultDotSizes: {
+      type: String,
+      enum: ['default', 'custom'],
+      default: 'default',
+    },
   },
   { timestamps: true, strict: true }
 );

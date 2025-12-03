@@ -4,8 +4,10 @@ const { getCurrentAdmin } = require("../lib/auth");
 const {
   getAllLevelConfigs,
   getLevelConfig,
+  getLevelConfigById,
   createLevelConfig,
   updateLevelConfig,
+  updateLevelConfigById,
   deleteLevelConfig,
 } = require("../lib/levels");
 const path = require("path");
@@ -88,6 +90,121 @@ function parseLevel(levelParam) {
   return levelNumber;
 }
 
+// IMPORTANT: ID-based routes must come BEFORE :level routes to avoid route conflicts
+
+// Update a level by ID (supports partial updates) - MUST BE BEFORE /:level route
+router.put("/id/:id", requireAuth, async (req, res) => {
+  try {
+    const levelId = req.params.id;
+    const payload = req.body;
+    
+    console.log(`[Levels API] PUT /api/levels/id/${levelId} - Partial update`, {
+      fields: Object.keys(payload),
+      colors: payload.colors?.length || 0,
+      dotSizes: payload.dotSizes?.length || 0,
+      dots: payload.dots?.length || 0,
+    });
+
+    // Get current level to check for old logo
+    const currentLevel = await getLevelConfigById(levelId);
+    if (!currentLevel) {
+      return res.status(404).json({ message: "Level not found." });
+    }
+
+    // Delete old logo file if logoUrl is being changed or cleared
+    if (payload.logoUrl !== undefined) {
+      const oldLogoUrl = currentLevel.logoUrl;
+      const newLogoUrl = payload.logoUrl ?? "";
+
+      if (oldLogoUrl && oldLogoUrl !== newLogoUrl && oldLogoUrl.startsWith("/uploads/")) {
+        try {
+          const oldFilePath = path.join(__dirname, "..", "uploads", oldLogoUrl.replace("/uploads/", ""));
+          await fs.unlink(oldFilePath);
+        } catch (error) {
+          if (error.code !== "ENOENT") {
+            console.warn(`Failed to delete old logo file: ${oldLogoUrl}`, error);
+          }
+        }
+      }
+    }
+
+    // Validate only the fields that are being updated
+    if (payload.background !== undefined && typeof payload.background !== "string") {
+      return res.status(400).json({
+        message: "Field background must be a string.",
+      });
+    }
+
+    if (payload.colors !== undefined) {
+      if (!Array.isArray(payload.colors)) {
+        return res.status(400).json({
+          message: "Field colors must be an array.",
+        });
+      }
+      const validColors = payload.colors.filter((c) => c != null);
+      for (let i = 0; i < validColors.length; i++) {
+        const colorItem = validColors[i];
+        if (!colorItem || typeof colorItem.color !== "string" || colorItem.color === "") {
+          return res.status(400).json({
+            message: `Color at index ${i} must have color as a non-empty string.`,
+          });
+        }
+      }
+    }
+
+    if (payload.dotSizes !== undefined) {
+      if (!Array.isArray(payload.dotSizes)) {
+        return res.status(400).json({
+          message: "Field dotSizes must be an array.",
+        });
+      }
+      const validSizes = payload.dotSizes.filter((s) => s != null);
+      for (let i = 0; i < validSizes.length; i++) {
+        const sizeItem = validSizes[i];
+        if (!sizeItem || typeof sizeItem.size !== "string" || sizeItem.size === "") {
+          return res.status(400).json({
+            message: `Dot size at index ${i} must have size as a non-empty string.`,
+          });
+        }
+      }
+    }
+
+    if (payload.dots !== undefined) {
+      if (!Array.isArray(payload.dots)) {
+        return res.status(400).json({
+          message: "Field dots must be an array.",
+        });
+      }
+      const validDots = payload.dots.filter((dot) => dot != null);
+      for (let i = 0; i < validDots.length; i++) {
+        const dot = validDots[i];
+        if (!dot || typeof dot.color !== "string" || dot.color === "") {
+          return res.status(400).json({
+            message: `Dot at index ${i} must have color as a non-empty string.`,
+          });
+        }
+      }
+    }
+
+    const updated = await updateLevelConfigById(levelId, payload);
+
+    if (!updated) {
+      console.error(`[Levels API] Level with ID ${levelId} not found for update`);
+      return res.status(404).json({ message: "Level not found." });
+    }
+
+    console.log(`[Levels API] Successfully updated level ${levelId}`);
+    return res.json({ level: updated });
+  } catch (error) {
+    console.error(`[Levels API] ERROR in PUT /api/levels/id/${req.params.id}:`, error);
+    console.error(`[Levels API] Error stack:`, error.stack);
+    return res.status(500).json({ 
+      message: error.message || "Failed to update level.",
+      error: error.message || "Unknown error"
+    });
+  }
+});
+
 // Get a specific level
 router.get("/:level", requireAuth, async (req, res) => {
   const levelNumber = parseLevel(req.params.level);
@@ -105,12 +222,20 @@ router.get("/:level", requireAuth, async (req, res) => {
 
 // Update a specific level
 router.put("/:level", requireAuth, async (req, res) => {
-  const levelNumber = parseLevel(req.params.level);
-  if (!levelNumber) {
-    return res.status(400).json({ message: "Invalid level." });
-  }
+  try {
+    const levelNumber = parseLevel(req.params.level);
+    if (!levelNumber) {
+      return res.status(400).json({ message: "Invalid level." });
+    }
 
-  const payload = req.body;
+    const payload = req.body;
+    
+    console.log(`[Levels API] PUT /api/levels/${levelNumber} - Updating level`, {
+      colors: payload.colors?.length || 0,
+      dotSizes: payload.dotSizes?.length || 0,
+      dots: payload.dots?.length || 0,
+      background: payload.background ? "set" : "not set",
+    });
   
   // Background field is optional, but if provided should be a string
   if (payload.background !== undefined && typeof payload.background !== "string") {
@@ -119,20 +244,68 @@ router.put("/:level", requireAuth, async (req, res) => {
     });
   }
 
-  if (!Array.isArray(payload.dots)) {
-    return res.status(400).json({
-      message: "Field dots must be an array.",
-    });
-  }
-
-  for (let i = 0; i < payload.dots.length; i++) {
-    const dot = payload.dots[i];
-    if (typeof dot.color !== "string" || typeof dot.size !== "string") {
+  // Validate colors array
+  if (payload.colors !== undefined) {
+    if (!Array.isArray(payload.colors)) {
       return res.status(400).json({
-        message: `Dot at index ${i} must have color and size as strings.`,
+        message: "Field colors must be an array.",
       });
     }
-    // sizeScore and colorScore are optional, will default to "0" if not provided
+    // Filter out null/undefined colors before validation
+    const validColors = payload.colors.filter((c) => c != null);
+    
+    for (let i = 0; i < validColors.length; i++) {
+      const colorItem = validColors[i];
+      if (!colorItem || typeof colorItem.color !== "string" || colorItem.color === "") {
+        return res.status(400).json({
+          message: `Color at index ${i} must have color as a non-empty string.`,
+        });
+      }
+      // score is optional, will default to 0 if not provided
+    }
+  }
+
+  // Validate dotSizes array
+  if (payload.dotSizes !== undefined) {
+    if (!Array.isArray(payload.dotSizes)) {
+      return res.status(400).json({
+        message: "Field dotSizes must be an array.",
+      });
+    }
+    // Filter out null/undefined sizes before validation
+    const validSizes = payload.dotSizes.filter((s) => s != null);
+    
+    for (let i = 0; i < validSizes.length; i++) {
+      const sizeItem = validSizes[i];
+      if (!sizeItem || typeof sizeItem.size !== "string" || sizeItem.size === "") {
+        return res.status(400).json({
+          message: `Dot size at index ${i} must have size as a non-empty string.`,
+        });
+      }
+      // score is optional, will default to 0 if not provided
+    }
+  }
+
+  // Validate dots array (color and colorScore)
+  if (payload.dots !== undefined) {
+    if (!Array.isArray(payload.dots)) {
+      return res.status(400).json({
+        message: "Field dots must be an array.",
+      });
+    }
+    // Filter out null/undefined dots before validation
+    const validDots = payload.dots.filter((dot) => dot != null);
+    
+    for (let i = 0; i < validDots.length; i++) {
+      const dot = validDots[i];
+      // Ensure dot exists and has a color field that is a string
+      if (!dot || typeof dot.color !== "string" || dot.color === "") {
+        return res.status(400).json({
+          message: `Dot at index ${i} must have color as a non-empty string.`,
+        });
+      }
+      // colorScore is optional, will default to calculated value if not provided
+    }
   }
 
   // Get current level to check for old logo
@@ -157,13 +330,23 @@ router.put("/:level", requireAuth, async (req, res) => {
     }
   }
 
-  const updated = await updateLevelConfig(levelNumber, payload);
+    const updated = await updateLevelConfig(levelNumber, payload);
 
-  if (!updated) {
-    return res.status(404).json({ message: "Level not found." });
+    if (!updated) {
+      console.error(`[Levels API] Level ${levelNumber} not found for update`);
+      return res.status(404).json({ message: "Level not found." });
+    }
+
+    console.log(`[Levels API] Successfully updated level ${levelNumber}`);
+    return res.json({ level: updated });
+  } catch (error) {
+    console.error(`[Levels API] ERROR in PUT /api/levels/${req.params.level}:`, error);
+    console.error(`[Levels API] Error stack:`, error.stack);
+    return res.status(500).json({ 
+      message: error.message || "Failed to update level.",
+      error: error.message || "Unknown error"
+    });
   }
-
-  return res.json({ level: updated });
 });
 
 // Delete a specific level

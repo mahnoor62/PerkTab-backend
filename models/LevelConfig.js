@@ -61,6 +61,11 @@ const LevelConfigSchema = new Schema(
       enum: ['default', 'custom'],
       default: 'default',
     },
+    targetScore: {
+      type: Number,
+      default: 0,
+      set: (v) => typeof v === 'string' ? parseInt(v, 10) || 0 : (typeof v === 'number' ? v : 0)
+    },
   },
   { timestamps: true, strict: true }
 );

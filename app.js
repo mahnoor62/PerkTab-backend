@@ -12,23 +12,32 @@ const allowedOrigins = process.env.CORS_OPTIONS
   ? process.env.CORS_OPTIONS.split(",")
   : [];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // Postman / server-side
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error("CORS not allowed"));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+// Shared CORS configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true); // Postman / server-side
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("CORS not allowed"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type", 
+    "Authorization", 
+    "Cache-Control",
+    "X-Requested-With",
+    "Accept",
+    "Accept-Language",
+    "Content-Language"
+  ],
+};
+
+app.use(cors(corsOptions));
 
 // ✅ VERY IMPORTANT (preflight fix)
-app.options("*", cors());
+app.options("*", cors(corsOptions));
 
 
 // const corsOrigins = process.env.CORS_OPTIONS
